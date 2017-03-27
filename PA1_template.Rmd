@@ -5,18 +5,69 @@ output:
     keep_md: true
 ---
 
+```{r setoptions, echo=FALSE}
+library(knitr)
+opts_chunk$set(echo=TRUE)
+```
 
 ## Loading and preprocessing the data
 
+To import the data, the workind directory must be set to the
+file with the data file. Once this is done, we will import it
+to the variable "activity".
 
+```{r importingdata, cache=TRUE}
+activity<-read.csv("activity.csv", na.strings = "NA", colClasses = c("numeric", "Date", "numeric"))
+```
+
+For the first parts of the assignment, the NAs will be ignored, we define an "activitynoNA". This will contain the data of "activity" ommitting the rows with NAs
+
+```{r cleanactivity}
+activitynoNA<-activity[complete.cases(activity),]
+```
 
 ## What is mean total number of steps taken per day?
 
+For the calculation of the total number of steps per day (which we will call "diarysteps") we will use the tapply fuction in the following way:
 
+```{r totalstepday}
+diarysteps<-with(activitynoNA, tapply(steps, date, sum))
+```
+
+Having calculated the total number of steps taken per day we can now plot the histogram.
+
+
+Finally, the mean and median values can be calculated.
+
+```{r meanmediansteps}
+meanstepsday<- mean(diarysteps)
+medianstepsday<- median(diarysteps)
+```
+
+This gives a mean value of `r meanstepsday` steps per day, and a median of `r medianstepsday` steps per day.
 
 ## What is the average daily activity pattern?
 
+For this part, we must calculate the average number of steps for the 5-minutes intervals.
 
+```{r meanstepsinterval}
+stepsinterval<-with(activitynoNA, tapply(steps, interval, mean))
+```
+
+With this new variable we can plot the 5-minute interval (x-axis) and the average number of steps taken.
+
+```{r plotmeanstepsinterval}
+plot(names(stepsinterval),stepsinterval, type="l", col="red", xlab="5-minute interval", ylab="Average number of steps")
+```
+
+Finally, we calculate interval with the maximum number of steps.
+
+```{r maxinterval}
+maxstepsintervalvalue<-max(stepsinterval)
+maxstepsinterval<-names(stepsinterval[stepsinterval==maxstepsintervalvalue])
+```
+
+This results in a maximum number of steps for the interval `r maxstepsinterval`.
 
 ## Imputing missing values
 
