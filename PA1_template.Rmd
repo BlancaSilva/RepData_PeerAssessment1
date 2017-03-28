@@ -16,7 +16,7 @@ To import the data, the workind directory must be set to the
 file with the data file. Once this is done, we will import it
 to the variable "activity".
 
-```{r importingdata, cache=TRUE}
+```{r importingdata}
 activity<-read.csv("activity.csv", na.strings = "NA", colClasses = c("numeric", "Date", "numeric"))
 ```
 
@@ -36,6 +36,10 @@ diarysteps<-with(activitynoNA, tapply(steps, date, sum))
 
 Having calculated the total number of steps taken per day we can now plot the histogram.
 
+```{r histdiarysteps}
+hist(diarysteps, main="Total number of steps per day with NAs", xlab="steps per day")
+
+```
 
 Finally, the mean and median values can be calculated.
 
@@ -71,6 +75,76 @@ This results in a maximum number of steps for the interval `r maxstepsinterval`.
 
 ## Imputing missing values
 
+In this part we have to find a method to avoid the NAs. In this case, we will set the step value of the NA to the ones calculated in the previous section  as average values for each temporal interval. This new data set will be called "activityfilled".
+
+First, the number of NAs will be calculated in the following way:
+
+```{r NAscount}
+totalNAs<-sum(is.na(activity))
+```
+
+This gives a total number of `r totalNAs` NA values.
+
+For filling the activity data set the code will be:
+
+```{r noNAs}
+activityfilled<-activity
+intervalmean<-cbind(as.numeric(names(stepsinterval)),stepsinterval)
+for (i in 1:dim(activityfilled)[1]){
+        if (is.na(activityfilled[i,1])){
+                activityfilled[i,1]<-intervalmean[intervalmean[,1]==activity[i,3],2]
+        }
+}
+```
+
+
+Finally, we will plot a histogram of the total number of steps taken each day and calculate the mean and median number of steps.
+
+```{r fillingplots}
+diarystepsfilled<-with(activityfilled, tapply(steps, date, sum))
+hist(diarystepsfilled, main="Total number of steps per day without NAs", xlab="steps per day")
+meanstepsdayfilled<- mean(diarystepsfilled)
+medianstepsdayfilled<- median(diarystepsfilled)
+```
+
+This give a mean of `r meanstepsdayfilled` steps per day and a media of `r medianstepsdayfilled` steps per day.
+
+If we compare these new values with the ones obtained in the first part in which we ommitted NAs (mean = `r meanstepsday`, median = `r medianstepsday`), we find a \emph{very} small difference in the case of the median, and a perfect match in the case of the mean value. We do see changes in the y-range of the histogram, but maintaining always the same shape. We can conclude that the effect of filling the gaps with the mean values has a negligible effect.
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+For this final part, we will create a new factor variable with two levels: weekday (Monday to Friday) and weekend (Saturday and Sunday). This new factor will be put in the "activityfilled" data set, calling the new data set "activityfilledweek". The followed steps are:
+
+```{r weekactivityfilled}
+Sys.setlocale("LC_TIME","English") #to see weekdays in English
+weekday<- weekdays(activityfilled[,2])
+mtwtf<-c("Monday","Tuesday","Wednesday","Thursday","Friday")
+activityfilledweek<-activityfilled
+activityfilledweek$weekday<-factor(weekday %in% mtwtf, levels = c(TRUE,FALSE), labels = c("weekday","weekend"))
+```
+
+Having this new data set with the "weekday" column indicating if it belongs to the weekend or not, we can now calculate the average number of steps for each interval across all weekday or weekend days.
+
+```{r meanstepsweekday}
+toplot<-with(activityfilledweek, tapply(steps,list( weekday,interval),mean))
+par(mfrow=c(2,1))
+par(oma = c(4, 4, 0, 0))
+par(mar = c(2, 2, 1, 1))
+plot1<-plot(intervalmean[,1],toplot[1,], col="red", type="l",main="Weekday",xlab="", ylab="")
+plot2<-plot(intervalmean[,1],toplot[2,], col="red", type="l",main="Weekend",xlab="",ylab="")
+mtext('5-minute interval', side = 1, outer = TRUE, line = 2)
+mtext('average number steps', side = 2, outer = TRUE, line = 2)
+
+```
+
+
+
+
+
+
+
+
+
+
+
